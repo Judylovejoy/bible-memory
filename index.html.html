@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="聖經記憶">
+<title>聖經記憶</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#C9A84C;--gold-l:#E8C97A;--gold-d:#7A5810;
+  --deep:#18100A;--bg:#F8F1E2;--bg2:#EDE3CC;--bg3:#E2D5B8;
+  --ink:#2C1F0A;--ink2:#6B5030;--ink3:#A08858;
+  --red:#8B1A1A;--green:#1A5C2A;--blue:#1A2E6C;
+  --ok:#2E7D4F;--fail:#8B1A1A;
+  --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;height:-webkit-fill-available;overflow:hidden;background:var(--deep);}
+body{font-family:'Noto Sans TC',sans-serif;color:var(--ink);}
+
+#app{display:flex;flex-direction:column;height:100vh;height:-webkit-fill-available;background:var(--bg);overflow:hidden;}
+
+/* HEADER */
+.hdr{
+  background:linear-gradient(160deg,#1C1409,#2C1F0A);
+  padding:env(safe-area-inset-top,0px) 0 0;
+  flex-shrink:0;border-bottom:2px solid var(--gold-d);
+  box-shadow:0 3px 16px rgba(0,0,0,.4);
+}
+.hdr-inner{padding:14px 18px 11px;display:flex;align-items:center;justify-content:space-between;}
+.hdr-left{display:flex;flex-direction:column;}
+.hdr-title{font-family:'Noto Serif TC',serif;font-size:21px;font-weight:900;color:var(--gold-l);letter-spacing:4px;}
+.hdr-sub{font-size:10px;color:var(--gold-d);letter-spacing:2px;margin-top:2px;}
+.hdr-cross{font-size:26px;filter:drop-shadow(0 0 6px var(--gold-d));}
+
+/* NAV */
+.nav{display:flex;background:var(--deep);flex-shrink:0;}
+.nav-btn{
+  flex:1;padding:9px 4px 7px;border:none;background:transparent;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  color:var(--gold-d);transition:.2s;position:relative;
+}
+.nav-btn.active{color:var(--gold-l);}
+.nav-btn.active::after{content:'';position:absolute;bottom:0;left:15%;right:15%;height:2px;background:var(--gold);border-radius:2px;}
+.nav-icon{font-size:18px;line-height:1;}
+.nav-label{font-size:10px;letter-spacing:1px;}
+
+/* PAGES */
+.page{display:none;flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+.page.active{display:flex;flex-direction:column;}
+
+/* ── PAGE: 我的經文 ── */
+.verse-toolbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;background:var(--bg2);border-bottom:1px solid var(--bg3);flex-shrink:0;
+}
+.verse-count{font-size:13px;color:var(--ink2);font-weight:500;}
+.btn-add{
+  background:var(--gold);color:var(--deep);border:none;border-radius:20px;
+  padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;
+  font-family:'Noto Sans TC',sans-serif;
+  box-shadow:0 2px 8px rgba(201,168,76,.4);
+}
+.verse-list{flex:1;padding:10px 12px 80px;}
+.verse-card{
+  background:#fff;border-radius:var(--r);margin-bottom:10px;
+  box-shadow:0 2px 8px var(--shadow,rgba(0,0,0,.08));
+  border:1px solid var(--bg3);overflow:hidden;
+}
+.verse-card-top{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  padding:12px 14px 8px;
+}
+.verse-ref{
+  font-family:'Noto Serif TC',serif;font-size:14px;font-weight:700;
+  color:var(--gold-d);letter-spacing:1px;
+}
+.verse-mastery{
+  font-size:11px;color:var(--ink3);
+  background:var(--bg2);border-radius:10px;padding:2px 8px;
+  white-space:nowrap;margin-left:8px;
+}
+.verse-text{
+  padding:0 14px 12px;font-size:14px;line-height:1.7;
+  color:var(--ink2);border-top:1px solid var(--bg2);padding-top:8px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.verse-actions{
+  display:flex;border-top:1px solid var(--bg2);
+}
+.verse-act-btn{
+  flex:1;padding:8px;border:none;background:transparent;cursor:pointer;
+  font-size:12px;color:var(--ink3);display:flex;align-items:center;justify-content:center;gap:4px;
+}
+.verse-act-btn:hover{background:var(--bg2);}
+.verse-act-btn.del{color:var(--fail);}
+.empty-state{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;padding:40px 20px;text-align:center;
+}
+.empty-icon{font-size:56px;opacity:.3;}
+.empty-title{font-size:18px;font-weight:700;color:var(--ink2);}
+.empty-desc{font-size:13px;color:var(--ink3);line-height:1.6;max-width:260px;}
+
+/* ── PAGE: 新增經文 ── */
+.add-form{padding:16px;}
+.field-label{font-size:13px;font-weight:700;color:var(--ink2);margin-bottom:6px;letter-spacing:1px;}
+.field-row{display:flex;gap:8px;margin-bottom:14px;}
+.field-half{flex:1;}
+.input-text{
+  width:100%;padding:11px 13px;border:1.5px solid var(--bg3);border-radius:var(--r);
+  font-size:15px;font-family:'Noto Sans TC',sans-serif;background:#fff;
+  color:var(--ink);outline:none;transition:.2s;
+}
+.input-text:focus{border-color:var(--gold);}
+.input-area{
+  width:100%;height:140px;padding:11px 13px;border:1.5px solid var(--bg3);border-radius:var(--r);
+  font-size:15px;font-family:'Noto Sans TC',sans-serif;background:#fff;
+  color:var(--ink);outline:none;resize:none;line-height:1.7;transition:.2s;
+}
+.input-area:focus{border-color:var(--gold);}
+.divider-row{
+  display:flex;align-items:center;gap:10px;margin:4px 0 14px;
+}
+.divider-line{flex:1;height:1px;background:var(--bg3);}
+.divider-text{font-size:12px;color:var(--ink3);}
+.upload-zone{
+  border:2px dashed var(--bg3);border-radius:var(--r);
+  padding:20px;text-align:center;cursor:pointer;margin-bottom:14px;
+  transition:.2s;background:var(--bg2);
+}
+.upload-zone:hover{border-color:var(--gold);background:#fffbf0;}
+.upload-icon{font-size:32px;margin-bottom:6px;}
+.upload-label{font-size:13px;color:var(--ink2);font-weight:500;}
+.upload-hint{font-size:11px;color:var(--ink3);margin-top:4px;}
+#fileInput{display:none;}
+.btn-save{
+  width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),var(--gold-d));
+  color:var(--deep);border:none;border-radius:var(--r);
+  font-size:16px;font-weight:700;letter-spacing:2px;cursor:pointer;
+  font-family:'Noto Sans TC',sans-serif;
+  box-shadow:0 4px 16px rgba(201,168,76,.4);
+  margin-top:4px;
+}
+.btn-save:active{transform:scale(.98);}
+
+/* ── PAGE: 練習 ── */
+.mode-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  padding:16px;
+}
+.mode-card{
+  background:#fff;border-radius:var(--r);padding:18px 14px;
+  border:1.5px solid var(--bg3);cursor:pointer;
+  transition:.2s;text-align:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+.mode-card:hover,.mode-card:active{border-color:var(--gold);background:#fffbf0;transform:translateY(-1px);}
+.mode-icon{font-size:32px;margin-bottom:8px;}
+.mode-name{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.mode-desc{font-size:11px;color:var(--ink3);line-height:1.5;}
+.mode-header{
+  padding:14px 16px 6px;
+  font-family:'Noto Serif TC',serif;font-size:18px;font-weight:700;
+  color:var(--ink);letter-spacing:1px;
+}
+
+/* ── QUIZ SCREEN ── */
+.quiz-screen{
+  display:none;flex:1;flex-direction:column;
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  background:var(--bg);z-index:30;padding-top:env(safe-area-inset-top,0px);
+}
+.quiz-screen.active{display:flex;}
+.quiz-hdr{
+  background:linear-gradient(160deg,#1C1409,#2C1F0A);
+  padding:14px 16px 12px;
+  display:flex;align-items:center;gap:12px;
+  border-bottom:2px solid var(--gold-d);flex-shrink:0;
+}
+.quiz-back{
+  background:transparent;border:none;color:var(--gold-l);
+  font-size:22px;cursor:pointer;padding:2px 8px 2px 0;
+}
+.quiz-title{font-family:'Noto Serif TC',serif;font-size:17px;font-weight:700;color:var(--gold-l);flex:1;}
+.quiz-progress-text{font-size:12px;color:var(--gold-d);}
+.quiz-prog-bar-wrap{height:4px;background:var(--gold-d);flex-shrink:0;}
+.quiz-prog-bar{height:100%;background:var(--gold-l);transition:.4s;width:0%;}
+.quiz-body{flex:1;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
+.quiz-score-row{
+  display:flex;gap:8px;align-items:center;flex-shrink:0;
+}
+.score-chip{
+  display:flex;align-items:center;gap:4px;
+  background:#fff;border-radius:20px;padding:5px 12px;
+  font-size:12px;font-weight:700;border:1.5px solid var(--bg3);
+}
+.score-chip.ok{color:var(--ok);border-color:var(--ok);}
+.score-chip.fail{color:var(--fail);border-color:var(--fail);}
+.quiz-ref-label{
+  font-family:'Noto Serif TC',serif;font-size:13px;color:var(--gold-d);
+  font-weight:700;letter-spacing:1px;
+}
+
+/* Multiple Choice */
+.quiz-question{
+  background:#fff;border-radius:var(--r);padding:16px;
+  font-size:15px;line-height:1.8;color:var(--ink);
+  box-shadow:0 2px 8px rgba(0,0,0,.06);border:1px solid var(--bg3);
+}
+.choice-list{display:flex;flex-direction:column;gap:9px;}
+.choice-btn{
+  width:100%;text-align:left;padding:12px 14px;
+  border:1.5px solid var(--bg3);border-radius:var(--r);
+  background:#fff;cursor:pointer;font-size:14px;
+  font-family:'Noto Sans TC',sans-serif;color:var(--ink);
+  line-height:1.6;transition:.15s;
+}
+.choice-btn:active{transform:scale(.99);}
+.choice-btn.correct{background:#e8f5ee;border-color:var(--ok);color:var(--ok);}
+.choice-btn.wrong{background:#fdf0f0;border-color:var(--fail);color:var(--fail);}
+.feedback-bar{
+  padding:12px 14px;border-radius:var(--r);font-size:14px;font-weight:700;
+  display:flex;align-items:center;gap:8px;
+  animation:slideUp .3s ease;
+}
+.feedback-bar.ok{background:#e8f5ee;color:var(--ok);}
+.feedback-bar.fail{background:#fdf0f0;color:var(--fail);}
+.btn-next{
+  padding:13px;background:linear-gradient(135deg,var(--gold),var(--gold-d));
+  color:var(--deep);border:none;border-radius:var(--r);
+  font-size:15px;font-weight:700;letter-spacing:1px;cursor:pointer;
+  font-family:'Noto Sans TC',sans-serif;
+  box-shadow:0 4px 12px rgba(201,168,76,.35);
+}
+
+/* Fill-in-blank */
+.blank-verse{
+  background:#fff;border-radius:var(--r);padding:16px;
+  font-size:16px;line-height:2;color:var(--ink);
+  box-shadow:0 2px 8px rgba(0,0,0,.06);border:1px solid var(--bg3);
+}
+.blank-word{
+  display:inline-block;position:relative;margin:0 2px;
+}
+.blank-input{
+  display:inline-block;width:2.2em;text-align:center;
+  border:none;border-bottom:2px solid var(--gold);
+  font-size:16px;font-family:'Noto Sans TC',sans-serif;
+  background:transparent;outline:none;color:var(--ink);
+  padding:0 2px;vertical-align:bottom;
+}
+.blank-input.ok{border-color:var(--ok);color:var(--ok);}
+.blank-input.fail{border-color:var(--fail);color:var(--fail);}
+.blank-hint{font-size:11px;color:var(--ink3);margin-top:4px;}
+
+/* Sort puzzle */
+.sort-instruction{font-size:13px;color:var(--ink2);padding:0 0 4px;}
+.sort-answer-zone{
+  min-height:60px;background:#fff;border-radius:var(--r);
+  border:2px dashed var(--gold-d);padding:10px;
+  display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;
+  margin-bottom:12px;
+}
+.sort-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.word-chip{
+  background:var(--bg2);border:1.5px solid var(--bg3);
+  border-radius:8px;padding:7px 12px;font-size:14px;cursor:pointer;
+  transition:.15s;user-select:none;
+}
+.word-chip:active{transform:scale(.95);}
+.word-chip.placed{background:var(--deep);color:var(--gold-l);border-color:var(--gold-d);}
+.word-chip.ok{background:#e8f5ee;border-color:var(--ok);color:var(--ok);}
+.word-chip.fail{background:#fdf0f0;border-color:var(--fail);color:var(--fail);}
+
+/* Results */
+.result-screen{
+  display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;
+  padding:30px 20px;text-align:center;gap:16px;
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  background:var(--bg);z-index:35;
+}
+.result-screen.active{display:flex;}
+.result-icon{font-size:72px;animation:pop .5s cubic-bezier(.2,1.6,.4,1);}
+.result-title{font-family:'Noto Serif TC',serif;font-size:26px;font-weight:900;color:var(--ink);}
+.result-sub{font-size:15px;color:var(--ink2);}
+.result-score{
+  font-size:52px;font-weight:900;
+  background:linear-gradient(135deg,var(--gold),var(--gold-d));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.result-detail{font-size:13px;color:var(--ink3);}
+.result-btns{display:flex;gap:10px;width:100%;max-width:300px;margin-top:8px;}
+.btn-outline{
+  flex:1;padding:12px;border:1.5px solid var(--gold);border-radius:var(--r);
+  background:transparent;color:var(--gold-d);font-size:14px;font-weight:700;cursor:pointer;
+  font-family:'Noto Sans TC',sans-serif;
+}
+.btn-solid{
+  flex:1;padding:12px;background:linear-gradient(135deg,var(--gold),var(--gold-d));
+  color:var(--deep);border:none;border-radius:var(--r);
+  font-size:14px;font-weight:700;cursor:pointer;
+  font-family:'Noto Sans TC',sans-serif;
+}
+
+/* ── PAGE: 統計 ── */
+.stats-page{padding:14px;}
+.stats-summary{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;
+}
+.stat-card{
+  background:#fff;border-radius:var(--r);padding:14px 10px;text-align:center;
+  border:1px solid var(--bg3);
+}
+.stat-num{font-size:24px;font-weight:900;color:var(--gold-d);}
+.stat-label{font-size:11px;color:var(--ink3);margin-top:3px;}
+.verse-stat-card{
+  background:#fff;border-radius:var(--r);margin-bottom:10px;
+  padding:13px 14px;border:1px solid var(--bg3);
+}
+.verse-stat-ref{font-family:'Noto Serif TC',serif;font-size:14px;font-weight:700;color:var(--gold-d);margin-bottom:6px;}
+.verse-stat-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+.verse-stat-label{font-size:12px;color:var(--ink3);}
+.verse-stat-val{font-size:12px;font-weight:700;color:var(--ink2);}
+.prog-bar-wrap{height:6px;background:var(--bg2);border-radius:3px;overflow:hidden;}
+.prog-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold-d),var(--gold));}
+
+/* MODAL */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;
+  align-items:flex-end;justify-content:center;
+}
+.modal-overlay.active{display:flex;}
+.modal{
+  background:var(--bg);border-radius:var(--r) var(--r) 0 0;
+  width:100%;max-height:85vh;overflow-y:auto;
+  padding:20px 16px calc(20px + env(safe-area-inset-bottom,0px));
+  animation:slideUp .3s ease;
+}
+.modal-title{
+  font-family:'Noto Serif TC',serif;font-size:18px;font-weight:700;
+  color:var(--ink);margin-bottom:16px;letter-spacing:1px;
+}
+.modal-close{
+  float:right;background:transparent;border:none;font-size:22px;cursor:pointer;color:var(--ink3);
+}
+
+/* TOASTS */
+.toast{
+  position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--deep);color:var(--gold-l);padding:10px 22px;
+  border-radius:30px;font-size:13px;font-weight:500;
+  z-index:100;opacity:0;transition:.3s;pointer-events:none;
+  border:1px solid var(--gold-d);white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ANIMATIONS */
+@keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+@keyframes pop{0%{transform:scale(0);}70%{transform:scale(1.2);}100%{transform:scale(1);}}
+
+/* SCROLL */
+.page::-webkit-scrollbar,.quiz-body::-webkit-scrollbar,.modal::-webkit-scrollbar{width:0;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="hdr-inner">
+      <div class="hdr-left">
+        <div class="hdr-title">✝ 聖經記憶</div>
+        <div class="hdr-sub">你的話是我腳前的燈</div>
+      </div>
+      <div class="hdr-cross">🕊</div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <div class="nav">
+    <button class="nav-btn active" onclick="showPage('verses')">
+      <span class="nav-icon">📖</span>
+      <span class="nav-label">我的經文</span>
+    </button>
+    <button class="nav-btn" onclick="showPage('add')">
+      <span class="nav-icon">➕</span>
+      <span class="nav-label">新增</span>
+    </button>
+    <button class="nav-btn" onclick="showPage('practice')">
+      <span class="nav-icon">🎯</span>
+      <span class="nav-label">練習</span>
+    </button>
+    <button class="nav-btn" onclick="showPage('stats')">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">統計</span>
+    </button>
+  </div>
+
+  <!-- PAGE: 我的經文 -->
+  <div class="page active" id="page-verses">
+    <div class="verse-toolbar">
+      <div class="verse-count" id="verseCount">尚未加入任何經文</div>
+      <button class="btn-add" onclick="showPage('add')">＋ 新增</button>
+    </div>
+    <div class="verse-list" id="verseList"></div>
+  </div>
+
+  <!-- PAGE: 新增 -->
+  <div class="page" id="page-add">
+    <div class="add-form">
+      <div class="field-label">書卷與章節</div>
+      <div class="field-row">
+        <div class="field-half">
+          <input id="inputBook" class="input-text" type="text" placeholder="例：約翰福音" />
+        </div>
+        <div class="field-half">
+          <input id="inputRef" class="input-text" type="text" placeholder="例：3:16" />
+        </div>
+      </div>
+      <div class="field-label">經文內容</div>
+      <textarea id="inputText" class="input-area" placeholder="在此貼上或輸入經文內容…&#10;&#10;例：神愛世人，甚至將他的獨生子賜給他們，叫一切信他的，不至滅亡，反得永生。"></textarea>
+      <div class="divider-row">
+        <div class="divider-line"></div>
+        <div class="divider-text">或者上傳檔案</div>
+        <div class="divider-line"></div>
+      </div>
+      <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-icon">📄</div>
+        <div class="upload-label">點擊上傳 .txt 或 .json 檔案</div>
+        <div class="upload-hint">格式：書卷|章節|經文內容（每行一段）</div>
+      </div>
+      <input type="file" id="fileInput" accept=".txt,.json">
+      <button class="btn-save" onclick="saveVerse()">🙏 儲存經文</button>
+    </div>
+  </div>
+
+  <!-- PAGE: 練習 -->
+  <div class="page" id="page-practice">
+    <div class="mode-header">選擇練習方式</div>
+    <div class="mode-grid">
+      <div class="mode-card" onclick="startMode('choice')">
+        <div class="mode-icon">🔤</div>
+        <div class="mode-name">選擇題</div>
+        <div class="mode-desc">四個選項<br>選出正確經文</div>
+      </div>
+      <div class="mode-card" onclick="startMode('blank')">
+        <div class="mode-icon">✏️</div>
+        <div class="mode-name">填空題</div>
+        <div class="mode-desc">打第一個字母<br>即算正確</div>
+      </div>
+      <div class="mode-card" onclick="startMode('sort')">
+        <div class="mode-icon">🧩</div>
+        <div class="mode-name">排列拼圖</div>
+        <div class="mode-desc">把打亂的詞語<br>排成正確順序</div>
+      </div>
+      <div class="mode-card" onclick="startMode('recall')">
+        <div class="mode-icon">🧠</div>
+        <div class="mode-name">默寫挑戰</div>
+        <div class="mode-desc">只看書卷章節<br>背出整段經文</div>
+      </div>
+    </div>
+    <div style="padding:0 16px 16px;">
+      <div class="mode-card" onclick="startMode('flash')" style="display:flex;align-items:center;gap:16px;text-align:left;padding:14px 16px;">
+        <div class="mode-icon" style="font-size:28px;">⚡</div>
+        <div>
+          <div class="mode-name">閃卡複習</div>
+          <div class="mode-desc">快速瀏覽，自評熟悉程度</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: 統計 -->
+  <div class="page" id="page-stats">
+    <div class="stats-page">
+      <div class="stats-summary">
+        <div class="stat-card">
+          <div class="stat-num" id="statTotal">0</div>
+          <div class="stat-label">總經文數</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="statSessions">0</div>
+          <div class="stat-label">練習次數</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="statAccuracy">-</div>
+          <div class="stat-label">正確率</div>
+        </div>
+      </div>
+      <div id="statsList"></div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- QUIZ SCREEN -->
+<div class="quiz-screen" id="quizScreen">
+  <div class="quiz-hdr">
+    <button class="quiz-back" onclick="closeQuiz()">←</button>
+    <div class="quiz-title" id="quizTitle">練習</div>
+    <div class="quiz-progress-text" id="quizProgressText"></div>
+  </div>
+  <div class="quiz-prog-bar-wrap"><div class="quiz-prog-bar" id="quizProgBar"></div></div>
+  <div class="quiz-body" id="quizBody"></div>
+</div>
+
+<!-- RESULT SCREEN -->
+<div class="result-screen" id="resultScreen">
+  <div class="result-icon" id="resultIcon">🎉</div>
+  <div class="result-title" id="resultTitle">練習完成！</div>
+  <div class="result-score" id="resultScore">100%</div>
+  <div class="result-sub" id="resultSub"></div>
+  <div class="result-detail" id="resultDetail"></div>
+  <div class="result-btns">
+    <button class="btn-outline" onclick="closeQuiz()">返回</button>
+    <button class="btn-solid" onclick="retryQuiz()">再來一次</button>
+  </div>
+</div>
+
+<!-- MODAL: 查看全文 -->
+<div class="modal-overlay" id="viewModal" onclick="closeModal('viewModal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal('viewModal')">✕</button>
+    <div class="modal-title" id="modalRef"></div>
+    <div style="font-size:15px;line-height:1.9;color:var(--ink2)" id="modalText"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════
+//  DATA
+// ═══════════════════════════════
+let DB = {
+  verses: [],      // {id, book, ref, text, added}
+  stats: {},       // {verseId: {correct, wrong, sessions}}
+  totalSessions: 0
+};
+
+function loadDB(){
+  try {
+    const s = localStorage.getItem('bibleMemoryDB');
+    if(s) DB = JSON.parse(s);
+  } catch(e){}
+}
+function saveDB(){
+  try { localStorage.setItem('bibleMemoryDB', JSON.stringify(DB)); } catch(e){}
+}
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+// ═══════════════════════════════
+//  NAV
+// ═══════════════════════════════
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  const idx = {verses:0,add:1,practice:2,stats:3}[name] ?? 0;
+  document.querySelectorAll('.nav-btn')[idx].classList.add('active');
+  if(name==='verses') renderVerseList();
+  if(name==='stats') renderStats();
+}
+
+// ═══════════════════════════════
+//  VERSE LIST
+// ═══════════════════════════════
+function renderVerseList(){
+  const list = document.getElementById('verseList');
+  const count = document.getElementById('verseCount');
+  if(!DB.verses.length){
+    count.textContent = '尚未加入任何經文';
+    list.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">📖</div>
+      <div class="empty-title">從神的話語開始</div>
+      <div class="empty-desc">點擊右上角「＋ 新增」加入你想記憶的經文，或者切換到「新增」頁面</div>
+    </div>`;
+    return;
+  }
+  count.textContent = `共 ${DB.verses.length} 段經文`;
+  list.innerHTML = DB.verses.map(v => {
+    const st = DB.stats[v.id] || {correct:0, wrong:0};
+    const total = st.correct + st.wrong;
+    const pct = total ? Math.round(st.correct/total*100) : 0;
+    const preview = v.text.length > 50 ? v.text.slice(0,50)+'…' : v.text;
+    return `<div class="verse-card">
+      <div class="verse-card-top">
+        <div>
+          <div class="verse-ref">${esc(v.book)} ${esc(v.ref)}</div>
+        </div>
+        <div class="verse-mastery">${total ? pct+'% 正確' : '未練習'}</div>
+      </div>
+      <div class="verse-text">${esc(preview)}</div>
+      <div class="verse-actions">
+        <button class="verse-act-btn" onclick="viewVerse('${v.id}')">👁 查看全文</button>
+        <button class="verse-act-btn del" onclick="deleteVerse('${v.id}')">🗑 刪除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function viewVerse(id){
+  const v = DB.verses.find(x=>x.id===id);
+  if(!v) return;
+  document.getElementById('modalRef').textContent = v.book + ' ' + v.ref;
+  document.getElementById('modalText').textContent = v.text;
+  document.getElementById('viewModal').classList.add('active');
+}
+
+function deleteVerse(id){
+  if(!confirm('確定要刪除這段經文嗎？')) return;
+  DB.verses = DB.verses.filter(v => v.id !== id);
+  delete DB.stats[id];
+  saveDB();
+  renderVerseList();
+  showToast('已刪除經文');
+}
+
+function closeModal(id){ document.getElementById(id).classList.remove('active'); }
+
+// ═══════════════════════════════
+//  ADD VERSE
+// ═══════════════════════════════
+function saveVerse(){
+  const book = document.getElementById('inputBook').value.trim();
+  const ref  = document.getElementById('inputRef').value.trim();
+  const text = document.getElementById('inputText').value.trim();
+  if(!book){ showToast('請輸入書卷名稱'); return; }
+  if(!ref){  showToast('請輸入章節（例：3:16）'); return; }
+  if(!text){ showToast('請輸入經文內容'); return; }
+  const verse = { id: uid(), book, ref, text, added: Date.now() };
+  DB.verses.push(verse);
+  DB.stats[verse.id] = { correct:0, wrong:0, sessions:0 };
+  saveDB();
+  document.getElementById('inputBook').value = '';
+  document.getElementById('inputRef').value = '';
+  document.getElementById('inputText').value = '';
+  showToast('✅ 經文已儲存！');
+  showPage('verses');
+}
+
+// File upload
+document.getElementById('fileInput').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    const content = ev.target.result;
+    let added = 0;
+    if(file.name.endsWith('.json')){
+      try {
+        const arr = JSON.parse(content);
+        arr.forEach(item => {
+          if(item.book && item.ref && item.text){
+            const v = { id:uid(), book:item.book, ref:item.ref, text:item.text, added:Date.now() };
+            DB.verses.push(v);
+            DB.stats[v.id] = {correct:0,wrong:0,sessions:0};
+            added++;
+          }
+        });
+      } catch(ex){ showToast('JSON 格式錯誤'); return; }
+    } else {
+      // .txt: 每行 書卷|章節|內容
+      content.split('\n').forEach(line => {
+        const parts = line.trim().split('|');
+        if(parts.length >= 3){
+          const v = { id:uid(), book:parts[0].trim(), ref:parts[1].trim(), text:parts.slice(2).join('|').trim(), added:Date.now() };
+          DB.verses.push(v);
+          DB.stats[v.id] = {correct:0,wrong:0,sessions:0};
+          added++;
+        }
+      });
+    }
+    if(added > 0){
+      saveDB();
+      showToast(`✅ 已匯入 ${added} 段經文`);
+      showPage('verses');
+    } else {
+      showToast('沒有找到可匯入的經文，請確認格式');
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+  e.target.value = '';
+});
+
+// ═══════════════════════════════
+//  QUIZ ENGINE
+// ═══════════════════════════════
+let Q = {
+  mode: '',
+  verses: [],
+  index: 0,
+  correct: 0,
+  wrong: 0,
+  currentVerse: null,
+  answered: false,
+  flashSide: 'front',
+  sortAnswer: []
+};
+
+function startMode(mode){
+  if(DB.verses.length < 1){ showToast('請先新增至少一段經文'); return; }
+  if(mode==='choice' && DB.verses.length < 2){ showToast('選擇題需要至少 2 段經文'); return; }
+  Q.mode = mode;
+  Q.verses = shuffle([...DB.verses]);
+  Q.index = 0;
+  Q.correct = 0;
+  Q.wrong = 0;
+  Q.answered = false;
+  DB.totalSessions++;
+  saveDB();
+  const titles = {choice:'選擇題',blank:'填空題',sort:'排列拼圖',recall:'默寫挑戰',flash:'閃卡複習'};
+  document.getElementById('quizTitle').textContent = titles[mode] || '練習';
+  document.getElementById('quizScreen').classList.add('active');
+  document.getElementById('resultScreen').classList.remove('active');
+  renderQuizQuestion();
+}
+
+function renderQuizQuestion(){
+  if(Q.index >= Q.verses.length){
+    showResult();
+    return;
+  }
+  Q.currentVerse = Q.verses[Q.index];
+  Q.answered = false;
+  Q.sortAnswer = [];
+  updateProgressBar();
+  const body = document.getElementById('quizBody');
+  document.getElementById('quizProgressText').textContent = `${Q.index+1} / ${Q.verses.length}`;
+  if(Q.mode === 'choice') body.innerHTML = renderChoice();
+  else if(Q.mode === 'blank') body.innerHTML = renderBlank();
+  else if(Q.mode === 'sort') { body.innerHTML = renderSort(); bindSortChips(); }
+  else if(Q.mode === 'recall') body.innerHTML = renderRecall();
+  else if(Q.mode === 'flash') body.innerHTML = renderFlash();
+}
+
+function updateProgressBar(){
+  const pct = Q.verses.length ? (Q.index / Q.verses.length * 100) : 0;
+  document.getElementById('quizProgBar').style.width = pct + '%';
+}
+
+// ─── Choice ───
+function renderChoice(){
+  const v = Q.currentVerse;
+  const others = DB.verses.filter(x => x.id !== v.id);
+  const opts = shuffle([v, ...shuffle(others).slice(0,3)]);
+  return `
+    <div class="quiz-score-row">
+      <div class="score-chip ok">✓ ${Q.correct}</div>
+      <div class="score-chip fail">✗ ${Q.wrong}</div>
+    </div>
+    <div class="quiz-ref-label">${esc(v.book)} ${esc(v.ref)}</div>
+    <div class="quiz-question">選出正確的經文內容：</div>
+    <div class="choice-list">
+      ${opts.map((opt,i) => `
+        <button class="choice-btn" onclick="answerChoice('${opt.id}','${v.id}',${i})" id="opt${i}">
+          ${esc(opt.text)}
+        </button>
+      `).join('')}
+    </div>
+    <div id="feedbackBar"></div>
+    <button class="btn-next" id="btnNext" style="display:none" onclick="nextQuestion()">下一題 →</button>
+  `;
+}
+
+function answerChoice(selectedId, correctId, idx){
+  if(Q.answered) return;
+  Q.answered = true;
+  const isOk = selectedId === correctId;
+  recordAnswer(Q.currentVerse.id, isOk);
+  const btns = document.querySelectorAll('.choice-btn');
+  btns.forEach(b => b.disabled = true);
+  btns[idx].classList.add(isOk ? 'correct' : 'wrong');
+  if(!isOk){
+    btns.forEach((b,i) => {
+      if(b.textContent.trim() === Q.currentVerse.text.trim()) b.classList.add('correct');
+    });
+  }
+  const fb = document.getElementById('feedbackBar');
+  fb.innerHTML = `<div class="feedback-bar ${isOk?'ok':'fail'}">${isOk?'🙌 答對了！':'😅 再加油！'}</div>`;
+  document.getElementById('btnNext').style.display = 'block';
+}
+
+// ─── Blank ───
+function renderBlank(){
+  const v = Q.currentVerse;
+  const words = v.text.split(/\s+/);
+  // blank out ~30% of words, min 1
+  const total = words.length;
+  const numBlanks = Math.max(1, Math.round(total * 0.3));
+  const blankIdxs = new Set();
+  while(blankIdxs.size < numBlanks && blankIdxs.size < total){
+    blankIdxs.add(Math.floor(Math.random() * total));
+  }
+  const htmlWords = words.map((w, i) => {
+    if(blankIdxs.has(i)){
+      const first = w[0] || '';
+      return `<span class="blank-word">
+        <input class="blank-input" data-answer="${esc(w)}" data-first="${esc(first.toLowerCase())}"
+          maxlength="1" type="text" placeholder="_"
+          oninput="checkBlank(this)" id="blank${i}" autocomplete="off" autocorrect="off" autocapitalize="off">
+      </span>`;
+    }
+    return `<span>${esc(w)}</span>`;
+  });
+  return `
+    <div class="quiz-score-row">
+      <div class="score-chip ok">✓ ${Q.correct}</div>
+      <div class="score-chip fail">✗ ${Q.wrong}</div>
+    </div>
+    <div class="quiz-ref-label">${esc(v.book)} ${esc(v.ref)}</div>
+    <div class="blank-verse">${htmlWords.join(' ')}</div>
+    <div class="blank-hint">💡 打每個詞的第一個字母就算對了</div>
+    <div id="feedbackBar"></div>
+    <button class="btn-next" id="btnNext" style="display:none" onclick="nextQuestion()">下一題 →</button>
+  `;
+}
+
+function checkBlank(input){
+  const typed = input.value.toLowerCase();
+  const first  = input.dataset.first.toLowerCase();
+  if(!typed) return;
+  const ok = typed === first;
+  input.classList.toggle('ok', ok);
+  input.classList.toggle('fail', !ok);
+  if(ok) input.disabled = true;
+  // Check if all blanks done
+  const allBlanks = document.querySelectorAll('.blank-input');
+  const allDone = Array.from(allBlanks).every(b => b.disabled || b.classList.contains('fail'));
+  if(allDone || Array.from(allBlanks).every(b => b.classList.contains('ok') || b.classList.contains('fail'))){
+    if(!Q.answered){
+      Q.answered = true;
+      const numOk  = document.querySelectorAll('.blank-input.ok').length;
+      const numFail = document.querySelectorAll('.blank-input.fail').length;
+      const isOk = numFail === 0;
+      recordAnswer(Q.currentVerse.id, isOk);
+      const fb = document.getElementById('feedbackBar');
+      fb.innerHTML = `<div class="feedback-bar ${isOk?'ok':'fail'}">${isOk?'🙌 全部答對！':'😅 還要繼續練習！'}</div>`;
+      // Reveal wrong answers
+      allBlanks.forEach(b => {
+        if(b.classList.contains('fail')){ b.value = b.dataset.answer; b.disabled = true; }
+      });
+      document.getElementById('btnNext').style.display = 'block';
+    }
+  }
+}
+
+// ─── Sort ───
+function renderSort(){
+  const v = Q.currentVerse;
+  // Split into meaningful chunks (by punctuation or every 2-4 chars)
+  const chunks = chunkText(v.text);
+  const shuffled = shuffle([...chunks]);
+  window._sortChunks = chunks;
+  window._shuffledChunks = shuffled;
+  window._sortPlaced = [];
+  return `
+    <div class="quiz-score-row">
+      <div class="score-chip ok">✓ ${Q.correct}</div>
+      <div class="score-chip fail">✗ ${Q.wrong}</div>
+    </div>
+    <div class="quiz-ref-label">${esc(v.book)} ${esc(v.ref)}</div>
+    <div class="sort-instruction">👆 按順序點選詞語，排列成正確經文</div>
+    <div class="sort-answer-zone" id="sortAnswer"></div>
+    <div class="sort-chips" id="sortChips">
+      ${shuffled.map((c,i) => `<div class="word-chip" id="sc${i}" data-idx="${i}" onclick="placeSortChip(${i})">${esc(c)}</div>`).join('')}
+    </div>
+    <div id="feedbackBar" style="margin-top:12px"></div>
+    <button class="btn-next" id="btnNext" style="display:none" onclick="nextQuestion()">下一題 →</button>
+    <button class="btn-outline" style="margin-top:8px;width:100%;padding:10px" onclick="checkSort()">✅ 確認答案</button>
+  `;
+}
+
+function chunkText(text){
+  // Split by 、，。？！…；or every 3-5 chars
+  const raw = text.split(/([，。？！、；…])/);
+  const chunks = [];
+  let buf = '';
+  raw.forEach(part => {
+    buf += part;
+    if(/[，。？！、；…]$/.test(buf) || buf.length >= 4){
+      chunks.push(buf.trim());
+      buf = '';
+    }
+  });
+  if(buf.trim()) chunks.push(buf.trim());
+  return chunks.filter(c => c.length > 0);
+}
+
+function bindSortChips(){}
+
+function placeSortChip(idx){
+  if(Q.answered) return;
+  const chip = document.getElementById('sc'+idx);
+  if(chip.classList.contains('placed')) return;
+  chip.classList.add('placed');
+  window._sortPlaced.push(idx);
+  const zone = document.getElementById('sortAnswer');
+  const token = document.createElement('div');
+  token.className = 'word-chip placed';
+  token.textContent = window._shuffledChunks[idx];
+  token.dataset.idx = idx;
+  token.onclick = function(){
+    // Remove from answer
+    if(Q.answered) return;
+    window._sortPlaced = window._sortPlaced.filter(i => i !== idx);
+    zone.removeChild(token);
+    chip.classList.remove('placed');
+  };
+  zone.appendChild(token);
+}
+
+function checkSort(){
+  if(Q.answered) return;
+  const placed = window._sortPlaced.map(i => window._shuffledChunks[i]);
+  const correct = window._sortChunks;
+  const isOk = placed.join('') === correct.join('');
+  Q.answered = true;
+  recordAnswer(Q.currentVerse.id, isOk);
+  const fb = document.getElementById('feedbackBar');
+  fb.innerHTML = `<div class="feedback-bar ${isOk?'ok':'fail'}">${isOk?'🙌 排列正確！':'😅 順序不對，正確答案：'+esc(correct.join(''))}</div>`;
+  document.getElementById('btnNext').style.display = 'block';
+  document.querySelectorAll('.btn-outline').forEach(b => b.style.display='none');
+}
+
+// ─── Recall ───
+function renderRecall(){
+  const v = Q.currentVerse;
+  return `
+    <div class="quiz-score-row">
+      <div class="score-chip ok">✓ ${Q.correct}</div>
+      <div class="score-chip fail">✗ ${Q.wrong}</div>
+    </div>
+    <div class="quiz-ref-label">${esc(v.book)} ${esc(v.ref)}</div>
+    <div class="quiz-question" style="font-size:18px;font-family:'Noto Serif TC',serif;text-align:center;padding:24px 16px;letter-spacing:2px;">
+      你記得這段經文嗎？<br><br>
+      <span style="font-size:22px;color:var(--gold-d)">${esc(v.book)} ${esc(v.ref)}</span>
+    </div>
+    <textarea id="recallInput" class="input-area" placeholder="在這裡試著默寫這段經文…" style="margin-bottom:8px"></textarea>
+    <button class="btn-solid" style="width:100%;padding:12px;font-size:15px" onclick="showRecallAnswer()">顯示答案</button>
+    <div id="recallAnswer" style="display:none">
+      <div style="background:#fff;border-radius:var(--r);padding:14px;margin-top:10px;border:1px solid var(--bg3);font-size:15px;line-height:1.8;color:var(--ink2)">${esc(v.text)}</div>
+      <div style="margin-top:10px;font-size:13px;color:var(--ink2);font-weight:700">你背對了嗎？</div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn-solid" style="flex:1;background:linear-gradient(135deg,#2E7D4F,#1A5C2A)" onclick="answerRecall(true)">✓ 背對了</button>
+        <button class="btn-solid" style="flex:1;background:linear-gradient(135deg,#8B1A1A,#5C1010)" onclick="answerRecall(false)">✗ 還沒熟</button>
+      </div>
+    </div>
+    <button class="btn-next" id="btnNext" style="display:none;margin-top:8px" onclick="nextQuestion()">下一題 →</button>
+  `;
+}
+
+function showRecallAnswer(){
+  document.getElementById('recallAnswer').style.display = 'block';
+  document.querySelector('.btn-solid').style.display = 'none';
+}
+
+function answerRecall(ok){
+  if(Q.answered) return;
+  Q.answered = true;
+  recordAnswer(Q.currentVerse.id, ok);
+  document.querySelectorAll('.btn-solid').forEach(b => b.disabled=true);
+  document.getElementById('btnNext').style.display = 'block';
+}
+
+// ─── Flash ───
+function renderFlash(){
+  const v = Q.currentVerse;
+  window._flashFront = true;
+  return `
+    <div class="quiz-score-row">
+      <div class="score-chip ok">✓ ${Q.correct}</div>
+      <div class="score-chip fail">✗ ${Q.wrong}</div>
+    </div>
+    <div style="font-size:12px;color:var(--ink3);text-align:center">點擊卡片翻面</div>
+    <div id="flashCard" onclick="flipFlash()" style="
+      background:#fff;border-radius:var(--r);padding:28px 20px;min-height:180px;
+      display:flex;align-items:center;justify-content:center;text-align:center;
+      cursor:pointer;border:2px solid var(--gold-d);
+      box-shadow:0 4px 20px rgba(0,0,0,.1);
+      font-family:'Noto Serif TC',serif;font-size:22px;font-weight:700;
+      color:var(--gold-d);letter-spacing:2px;
+      transition:transform .3s;
+    ">
+      <div id="flashFront">${esc(v.book)} ${esc(v.ref)}</div>
+      <div id="flashBack" style="display:none;font-size:15px;color:var(--ink);font-family:'Noto Sans TC',sans-serif;font-weight:400;line-height:1.8;letter-spacing:0">${esc(v.text)}</div>
+    </div>
+    <div id="flashActions" style="display:none;margin-top:4px">
+      <div style="font-size:13px;color:var(--ink2);text-align:center;margin-bottom:8px;font-weight:700">這段經文熟悉嗎？</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-solid" style="flex:1;background:linear-gradient(135deg,#8B1A1A,#5C1010)" onclick="answerFlash(false)">😅 還不熟</button>
+        <button class="btn-solid" style="flex:1;background:linear-gradient(135deg,#2E7D4F,#1A5C2A)" onclick="answerFlash(true)">😊 很熟悉</button>
+      </div>
+    </div>
+    <button class="btn-next" id="btnNext" style="display:none;margin-top:8px" onclick="nextQuestion()">下一張 →</button>
+  `;
+}
+
+function flipFlash(){
+  if(Q.answered) return;
+  window._flashFront = !window._flashFront;
+  const front = document.getElementById('flashFront');
+  const back  = document.getElementById('flashBack');
+  const card  = document.getElementById('flashCard');
+  front.style.display = window._flashFront ? 'block' : 'none';
+  back.style.display  = window._flashFront ? 'none' : 'block';
+  if(!window._flashFront) document.getElementById('flashActions').style.display = 'block';
+}
+
+function answerFlash(ok){
+  if(Q.answered) return;
+  Q.answered = true;
+  recordAnswer(Q.currentVerse.id, ok);
+  document.querySelectorAll('#flashActions .btn-solid').forEach(b => b.disabled=true);
+  document.getElementById('btnNext').style.display = 'block';
+}
+
+// ─── Shared ───
+function nextQuestion(){
+  Q.index++;
+  renderQuizQuestion();
+}
+
+function recordAnswer(verseId, isOk){
+  if(!DB.stats[verseId]) DB.stats[verseId] = {correct:0,wrong:0,sessions:0};
+  if(isOk){ Q.correct++; DB.stats[verseId].correct++; }
+  else     { Q.wrong++;  DB.stats[verseId].wrong++; }
+  saveDB();
+}
+
+function closeQuiz(){
+  document.getElementById('quizScreen').classList.remove('active');
+  document.getElementById('resultScreen').classList.remove('active');
+}
+
+function retryQuiz(){ startMode(Q.mode); }
+
+function showResult(){
+  document.getElementById('quizProgBar').style.width = '100%';
+  const total = Q.correct + Q.wrong;
+  const pct = total ? Math.round(Q.correct/total*100) : 100;
+  const icon = pct >= 90 ? '🏆' : pct >= 70 ? '🎉' : pct >= 50 ? '💪' : '📖';
+  const title = pct >= 90 ? '太棒了！' : pct >= 70 ? '很不錯！' : pct >= 50 ? '繼續加油！' : '再多練習！';
+  document.getElementById('resultIcon').textContent = icon;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultScore').textContent = pct + '%';
+  document.getElementById('resultSub').textContent = `答對 ${Q.correct} 題 / 共 ${total} 題`;
+  document.getElementById('resultDetail').textContent = `完成了 ${Q.verses.length} 段經文的練習`;
+  document.getElementById('resultScreen').classList.add('active');
+}
+
+// ═══════════════════════════════
+//  STATS
+// ═══════════════════════════════
+function renderStats(){
+  document.getElementById('statTotal').textContent = DB.verses.length;
+  document.getElementById('statSessions').textContent = DB.totalSessions || 0;
+  const allStats = Object.values(DB.stats);
+  const totalC = allStats.reduce((a,s) => a+s.correct, 0);
+  const totalW = allStats.reduce((a,s) => a+s.wrong, 0);
+  const totalT = totalC + totalW;
+  document.getElementById('statAccuracy').textContent = totalT ? Math.round(totalC/totalT*100)+'%' : '-';
+
+  const list = document.getElementById('statsList');
+  if(!DB.verses.length){ list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--ink3)">尚無統計資料</div>'; return; }
+  list.innerHTML = DB.verses.map(v => {
+    const st = DB.stats[v.id] || {correct:0,wrong:0};
+    const t = st.correct + st.wrong;
+    const pct = t ? Math.round(st.correct/t*100) : 0;
+    return `<div class="verse-stat-card">
+      <div class="verse-stat-ref">${esc(v.book)} ${esc(v.ref)}</div>
+      <div class="verse-stat-row">
+        <span class="verse-stat-label">正確率</span>
+        <span class="verse-stat-val">${t ? pct+'%' : '未練習'}</span>
+      </div>
+      <div class="prog-bar-wrap">
+        <div class="prog-bar-fill" style="width:${pct}%"></div>
+      </div>
+      <div class="verse-stat-row" style="margin-top:6px">
+        <span class="verse-stat-label">答對 ${st.correct} 次</span>
+        <span class="verse-stat-label">答錯 ${st.wrong} 次</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════
+//  UTILS
+// ═══════════════════════════════
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ═══════════════════════════════
+//  INIT
+// ═══════════════════════════════
+loadDB();
+renderVerseList();
+</script>
+</body>
+</html>
